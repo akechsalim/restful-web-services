@@ -7,36 +7,38 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class UserResource {
-    private UserDaoService service;
+    private final UserRepository userRepository;
 
-    public UserResource(UserDaoService service) {
-        this.service = service;
+    public UserResource(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    @GetMapping("/users")
+    @GetMapping("/jpa/users")
     public List<User> retrieveAllUsers() {
-        return service.findAll();
+        return userRepository.findAll();
     }
 
-    @GetMapping("/users/{id}")
-    public User retrieveUser(@PathVariable int id) {
-        return service.findOne(id);
+    @GetMapping("/jpa/users/{id}")
+    public Optional<User> retrieveUser(@PathVariable int id) {
+        return userRepository.findById(id);
     }
 
-    @PostMapping("/users")
+    @PostMapping("/jpa/users")
     public void createUser(@Valid @RequestBody User user) {
-        User savedUser = service.save(user);
+        User savedUser = userRepository.save(user);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(savedUser.getId())
                 .toUri();
         ResponseEntity.created(location).build();
     }
-    @DeleteMapping("/users/{id}")
+
+    @DeleteMapping("/jpa/users/{id}")
     public void deleteUser(@PathVariable int id) {
-        service.deleteById(id);
+        userRepository.deleteById(id);
     }
 }
