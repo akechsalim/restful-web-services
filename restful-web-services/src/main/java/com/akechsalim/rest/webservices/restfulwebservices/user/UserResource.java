@@ -12,9 +12,11 @@ import java.util.Optional;
 @RestController
 public class UserResource {
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
-    public UserResource(UserRepository userRepository) {
+    public UserResource(UserRepository userRepository,PostRepository postRepository) {
         this.userRepository = userRepository;
+        this.postRepository = postRepository;
     }
 
     @GetMapping("/jpa/users")
@@ -28,17 +30,34 @@ public class UserResource {
     }
 
     @PostMapping("/jpa/users")
-    public void createUser(@Valid @RequestBody User user) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         User savedUser = userRepository.save(user);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(savedUser.getId())
                 .toUri();
-        ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).build();
     }
-
     @DeleteMapping("/jpa/users/{id}")
     public void deleteUser(@PathVariable int id) {
         userRepository.deleteById(id);
+    }
+    @GetMapping("/jpa/users/{id}/posts")
+    public List<Post> retrievePostsForUser(@PathVariable int id) {
+        Optional<User> retrieveUser =userRepository.findById(id);
+        return retrieveUser.get().getPosts();
+
+    }
+    @PostMapping("/jpa/users/{id}/posts")
+    public ResponseEntity<Object> createPostForUser(@PathVariable int id, @Valid @RequestBody Post post) {
+        Optional<User> retrieveUser =userRepository.findById(id);
+        post.setUser(retrieveUser.get());
+        Post savedPost = postRepository.save(post);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedPost.getId())
+                .toUri();
+        return ResponseEntity.created(location).build();
+
     }
 }
